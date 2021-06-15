@@ -4,7 +4,14 @@ version = "0.1.0"
 authors = ["npars <npars@users.noreply.github.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Proof of concept for arbitrary integer sizes using generic const."
+
+license = "Apache-2.0/MIT"
+readme = "README.md"
+repository = "https://github.com/npars/arbintrary.git"
+
+keywords = ["integer", "unaligned", "misaligned"]
+categories = ["embedded", "no-std", "data-structures"]
 
 [dependencies]
 
