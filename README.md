@@ -1,4 +1,4 @@
-# arbINTrary
+# arbINTrary [![CI](https://github.com/npars/arbintrary/actions/workflows/ci.yaml/badge.svg)](https://github.com/npars/arbintrary/actions/workflows/ci.yaml) [![Crates.io](https://img.shields.io/crates/v/arbintrary.svg)](https://crates.io/crates/arbintrary)
 
 A Proof of Concept implementation of generic integers using the const generics feature. Based on the [uX crate](https://crates.io/crates/ux)
 and @programmerjake's [initial implementation](https://github.com/rust-lang/rfcs/pull/2581#issuecomment-730709707). 
