@@ -22,6 +22,21 @@ use lib::core::fmt::{Binary, Debug, Display, Error, Formatter, LowerHex, Octal, 
 
 pub use self::implementation::{int, uint};
 
+pub trait As<Value> {
+    type Output;
+
+    /// Performs lossy conversion.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use arbintrary::*;
+    /// assert_eq!(uint::<4>::as_(uint::<12>::new(0xFFF)), uint::<4>::new(0xF));
+    /// ```
+    #[must_use]
+    fn as_(value: Value) -> Self::Output;
+}
+
 mod implementation {
     use super::*;
 
@@ -82,7 +97,7 @@ mod implementation {
                 } else {
                     Self(self.0 | !Self::MAX.0)
                 }
-                }
+            }
         }
 
         impl_common!($name, $base);
@@ -391,6 +406,17 @@ mod implementation {
         };
     }
 
+    macro_rules! impl_as {
+    ($name:ident, $base:ty, [$($other:ident,)*]) => {
+        $(impl<const N: usize, const M: usize> As<$other<M>> for $name<N> {
+            type Output = Self;
+
+            fn as_(value: $other<M>) -> Self {
+                Self(value.0 as $base).mask()
+            }
+        })*
+    }}
+
     impl_uint!(UInt8Impl, u8, 8, [0, 1, 2, 3, 4, 5, 6, 7,]);
     impl_uint!(UInt16Impl, u16, 16, [9, 10, 11, 12, 13, 14, 15,]);
     impl_uint!(
@@ -446,6 +472,168 @@ mod implementation {
             87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,
             107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123,
             124, 125, 126, 127,
+        ]
+    );
+
+    impl_as!(
+        UInt8Impl,
+        u8,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        UInt16Impl,
+        u16,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        UInt32Impl,
+        u32,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        UInt64Impl,
+        u64,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        UInt128Impl,
+        u128,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+
+    impl_as!(
+        Int8Impl,
+        i8,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        Int16Impl,
+        i16,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        Int32Impl,
+        i32,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        Int64Impl,
+        i64,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
+        ]
+    );
+    impl_as!(
+        Int128Impl,
+        i128,
+        [
+            UInt8Impl,
+            UInt16Impl,
+            UInt32Impl,
+            UInt64Impl,
+            UInt128Impl,
+            Int8Impl,
+            Int16Impl,
+            Int32Impl,
+            Int64Impl,
+            Int128Impl,
         ]
     );
 }
@@ -757,5 +945,16 @@ mod tests {
         assert_eq!(!uint::<7>::new(0x7F), uint::<7>::new(0));
         assert_eq!(!uint::<7>::new(0), uint::<7>::new(0x7F));
         assert_eq!(!uint::<7>::new(56), uint::<7>::new(71));
+    }
+
+    #[test]
+    fn test_as() {
+        assert_eq!(uint::<4>::as_(uint::<12>::new(0xFFF)), uint::<4>::new(0xF));
+        assert_eq!(
+            uint::<4>::as_(int::<68>::new(0x7FFFFFFFFFFFFFFFF)),
+            uint::<4>::new(0xF)
+        );
+        assert_eq!(int::<3>::as_(int::<100>::new(-1)), int::<3>::new(-1));
+        assert_eq!(int::<12>::as_(uint::<12>::new(0xFFF)), int::<12>::new(-1));
     }
 }
