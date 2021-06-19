@@ -61,7 +61,7 @@ mod implementation {
         pub struct $name<const N: usize>($base);
 
         impl<const N: usize> $name<N> {
-            pub const MAX: Self = Self((1 << N) - 1);
+            pub const MAX: Self = Self(if N > 0 {<$base>::MAX >> ($base_bits - (N as u32))} else {0});
             pub const MIN: Self = Self(0);
 
             fn mask(self) -> Self {
@@ -70,10 +70,6 @@ mod implementation {
         }
 
         impl_common!($name, $base);
-
-        impl UIntImpl<$base_bits> for () {
-            type Type = $base;
-        }
 
         $(impl UIntImpl<$bits> for () {
             type Type = $name<$bits>;
@@ -88,8 +84,8 @@ mod implementation {
         pub struct $name<const N: usize>($base);
 
         impl<const N: usize> $name<N> {
-            pub const MAX: Self = Self((1 << (N - 1)) - 1);
-            pub const MIN: Self = Self(-(1 << (N - 1)));
+            pub const MAX: Self = Self(if N > 0 {<$base>::MAX >> ($base_bits - (N as u32))} else {0});
+            pub const MIN: Self = Self(if N > 0 {-(<$base>::MAX >> ($base_bits - (N as u32))) - 1} else {0});
 
             fn mask(self) -> Self {
                 if ( self.0 & (1<<(N-1)) ) == 0 {
@@ -107,10 +103,6 @@ mod implementation {
             fn neg(self) -> Self {
                 Self(-self.0).mask()
             }
-        }
-
-        impl IntImpl<$base_bits> for () {
-            type Type = $base;
         }
 
         $(impl IntImpl<$bits> for () {
@@ -417,13 +409,13 @@ mod implementation {
         })*
     }}
 
-    impl_uint!(UInt8Impl, u8, 8, [0, 1, 2, 3, 4, 5, 6, 7,]);
-    impl_uint!(UInt16Impl, u16, 16, [9, 10, 11, 12, 13, 14, 15,]);
+    impl_uint!(UInt8Impl, u8, 8, [0, 1, 2, 3, 4, 5, 6, 7, 8,]);
+    impl_uint!(UInt16Impl, u16, 16, [9, 10, 11, 12, 13, 14, 15, 16,]);
     impl_uint!(
         UInt32Impl,
         u32,
         32,
-        [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,]
+        [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,]
     );
     impl_uint!(
         UInt64Impl,
@@ -431,7 +423,7 @@ mod implementation {
         64,
         [
             33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-            55, 56, 57, 58, 59, 60, 61, 62, 63,
+            55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
         ]
     );
     impl_uint!(
@@ -442,17 +434,17 @@ mod implementation {
             65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86,
             87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,
             107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123,
-            124, 125, 126, 127,
+            124, 125, 126, 127, 128,
         ]
     );
 
-    impl_int!(Int8Impl, i8, 8, [0, 1, 2, 3, 4, 5, 6, 7,]);
-    impl_int!(Int16Impl, i16, 16, [9, 10, 11, 12, 13, 14, 15,]);
+    impl_int!(Int8Impl, i8, 8, [0, 1, 2, 3, 4, 5, 6, 7, 8,]);
+    impl_int!(Int16Impl, i16, 16, [9, 10, 11, 12, 13, 14, 15, 16,]);
     impl_int!(
         Int32Impl,
         i32,
         32,
-        [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,]
+        [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,]
     );
     impl_int!(
         Int64Impl,
@@ -460,7 +452,7 @@ mod implementation {
         64,
         [
             33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-            55, 56, 57, 58, 59, 60, 61, 62, 63,
+            55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
         ]
     );
     impl_int!(
@@ -471,7 +463,7 @@ mod implementation {
             65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86,
             87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,
             107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123,
-            124, 125, 126, 127,
+            124, 125, 126, 127, 128,
         ]
     );
 
@@ -644,29 +636,37 @@ mod tests {
 
     #[test]
     fn min_max_values() {
+        assert_eq!(uint::<0>::MAX, uint::<0>::new(0));
         assert_eq!(uint::<1>::MAX, uint::<1>::new(1));
         assert_eq!(uint::<2>::MAX, uint::<2>::new(3));
         assert_eq!(uint::<3>::MAX, uint::<3>::new(7));
         assert_eq!(uint::<7>::MAX, uint::<7>::new(127));
+        assert_eq!(uint::<8>::MAX, uint::<8>::new(255));
         assert_eq!(uint::<9>::MAX, uint::<9>::new(511));
 
+        assert_eq!(int::<0>::MAX, int::<0>::new(0));
         assert_eq!(int::<1>::MAX, int::<1>::new(0));
         assert_eq!(int::<2>::MAX, int::<2>::new(1));
         assert_eq!(int::<3>::MAX, int::<3>::new(3));
         assert_eq!(int::<7>::MAX, int::<7>::new(63));
+        assert_eq!(int::<8>::MAX, int::<8>::new(127));
         assert_eq!(int::<9>::MAX, int::<9>::new(255));
 
+        assert_eq!(uint::<0>::MIN, uint::<0>::new(0));
         assert_eq!(uint::<1>::MIN, uint::<1>::new(0));
         assert_eq!(uint::<2>::MIN, uint::<2>::new(0));
         assert_eq!(uint::<3>::MIN, uint::<3>::new(0));
         assert_eq!(uint::<7>::MIN, uint::<7>::new(0));
+        assert_eq!(uint::<8>::MIN, uint::<8>::new(0));
         assert_eq!(uint::<9>::MIN, uint::<9>::new(0));
         assert_eq!(uint::<127>::MIN, uint::<127>::new(0));
 
+        assert_eq!(int::<0>::MIN, int::<0>::new(0));
         assert_eq!(int::<1>::MIN, int::<1>::new(-1));
         assert_eq!(int::<2>::MIN, int::<2>::new(-2));
         assert_eq!(int::<3>::MIN, int::<3>::new(-4));
         assert_eq!(int::<7>::MIN, int::<7>::new(-64));
+        assert_eq!(int::<8>::MIN, int::<8>::new(-128));
         assert_eq!(int::<9>::MIN, int::<9>::new(-256));
     }
 
@@ -748,11 +748,13 @@ mod tests {
     #[test]
     fn test_add() {
         assert_eq!(uint::<5>::new(1) + uint::<5>::new(2), uint::<5>::new(3));
+        assert_eq!(uint::<8>::new(254) + uint::<8>::new(1), uint::<8>::new(255));
 
         assert_eq!(int::<7>::MAX + int::<7>::MIN, int::<7>::new(-1));
         assert_eq!(int::<7>::new(4) + int::<7>::new(-3), int::<7>::new(1));
         assert_eq!(int::<7>::new(-4) + int::<7>::new(3), int::<7>::new(-1));
         assert_eq!(int::<7>::new(-3) + int::<7>::new(-20), int::<7>::new(-23));
+        assert_eq!(int::<8>::new(126) + int::<8>::new(1), int::<8>::new(127));
     }
 
     #[test]
@@ -957,4 +959,9 @@ mod tests {
         assert_eq!(int::<3>::as_(int::<100>::new(-1)), int::<3>::new(-1));
         assert_eq!(int::<12>::as_(uint::<12>::new(0xFFF)), int::<12>::new(-1));
     }
+
+    // #[test]
+    // fn test_from() {
+    //     assert_eq!(uint::<4>::from(uint::<3>::new(1)), uint::<4>::new(1));
+    // }
 }
