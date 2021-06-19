@@ -1,6 +1,6 @@
 [package]
 name = "arbintrary"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["npars <npars@users.noreply.github.com>"]
 edition = "2018"
 
