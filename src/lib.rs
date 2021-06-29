@@ -437,6 +437,15 @@ mod implementation {
         })*
     }}
 
+    macro_rules! impl_from_primitive {
+    ($name:ident, [$($primitive:ty,)*]) => {
+        $(impl<const N: usize> From<$name<N>> for $primitive {
+            fn from(value: $name<N>) -> Self {
+                value.0.into()
+            }
+        })*
+    }}
+
     macro_rules! impl_try_from_bitwise {
     ($name:ident, $base:ty, $bits:literal, [$($other_bits:literal,)*]) => {
         $(impl TryFrom<$name<$other_bits>> for $name<$bits> {
@@ -465,6 +474,17 @@ mod implementation {
                 } else {
                     Ok(Self(base_value).mask())
                 }
+            }
+        })*
+    }}
+
+    macro_rules! impl_try_from_primitive {
+    ($name:ident, [$($primitive:ty,)*]) => {
+        $(impl<const N: usize> TryFrom<$name<N>> for $primitive {
+            type Error = TryFromGenericIntError;
+
+            fn try_from(value: $name<N>) -> Result<Self, Self::Error> {
+                Self::try_from(value.0).map_err(|_| TryFromGenericIntError)
             }
         })*
     }}
@@ -678,6 +698,7 @@ mod implementation {
     );
 
     // UInt8Impl::from()
+    impl_from_primitive!(UInt8Impl, [u8, u16, u32, u64, u128, usize,]);
     impl_from_bitwise!(UInt8Impl, 1, UInt8Impl, [0,]);
     impl_from_bitwise!(UInt8Impl, 2, UInt8Impl, [0, 1,]);
     impl_from_bitwise!(UInt8Impl, 3, UInt8Impl, [0, 1, 2,]);
@@ -687,6 +708,7 @@ mod implementation {
     impl_from_bitwise!(UInt8Impl, 7, UInt8Impl, [0, 1, 2, 3, 4, 5, 6,]);
 
     // UInt16Impl::from()
+    impl_from_primitive!(UInt16Impl, [u16, u32, u64, u128, usize,]);
     impl_from_basewise!(UInt16Impl, [UInt8Impl,]);
     impl_from_bitwise!(UInt16Impl, 10, UInt16Impl, [9,]);
     impl_from_bitwise!(UInt16Impl, 11, UInt16Impl, [9, 10,]);
@@ -696,6 +718,7 @@ mod implementation {
     impl_from_bitwise!(UInt16Impl, 15, UInt16Impl, [9, 10, 11, 12, 13, 14,]);
 
     // UInt32Impl::from()
+    impl_from_primitive!(UInt32Impl, [u32, u64, u128,]);
     impl_from_basewise!(UInt32Impl, [UInt8Impl, UInt16Impl,]);
     impl_from_bitwise!(UInt32Impl, 18, UInt32Impl, [17,]);
     impl_from_bitwise!(UInt32Impl, 19, UInt32Impl, [17, 18,]);
@@ -714,6 +737,7 @@ mod implementation {
     impl_from_bitwise!(UInt32Impl, 32, UInt32Impl, [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,]);
 
     // UInt64Impl::from()
+    impl_from_primitive!(UInt64Impl, [u64, u128,]);
     impl_from_basewise!(UInt64Impl, [UInt8Impl, UInt16Impl, UInt32Impl,]);
     impl_from_bitwise!(UInt64Impl, 34, UInt64Impl, [33,]);
     impl_from_bitwise!(UInt64Impl, 35, UInt64Impl, [33, 34,]);
@@ -835,6 +859,7 @@ mod implementation {
     );
 
     // UInt128Impl::from()
+    impl_from_primitive!(UInt128Impl, [u128,]);
     impl_from_basewise!(UInt128Impl, [UInt8Impl, UInt16Impl, UInt32Impl, UInt64Impl,]);
     impl_from_bitwise!(UInt128Impl, 66, UInt128Impl, [65,]);
     impl_from_bitwise!(UInt128Impl, 67, UInt128Impl, [65, 66,]);
@@ -1257,6 +1282,7 @@ mod implementation {
     );
 
     // Int8Impl::from()
+    impl_from_primitive!(Int8Impl, [i8, i16, i32, i64, i128,]);
     impl_from_bitwise!(Int8Impl, 1, Int8Impl, [0,]);
     impl_from_bitwise!(Int8Impl, 2, Int8Impl, [0, 1,]);
     impl_from_bitwise!(Int8Impl, 3, Int8Impl, [0, 1, 2,]);
@@ -1266,6 +1292,7 @@ mod implementation {
     impl_from_bitwise!(Int8Impl, 7, Int8Impl, [0, 1, 2, 3, 4, 5, 6,]);
 
     // Int16Impl::from()
+    impl_from_primitive!(Int16Impl, [i16, i32, i64, i128,]);
     impl_from_basewise!(Int16Impl, [Int8Impl,]);
     impl_from_bitwise!(Int16Impl, 10, Int16Impl, [9,]);
     impl_from_bitwise!(Int16Impl, 11, Int16Impl, [9, 10,]);
@@ -1275,6 +1302,7 @@ mod implementation {
     impl_from_bitwise!(Int16Impl, 15, Int16Impl, [9, 10, 11, 12, 13, 14,]);
 
     // Int32Impl::from()
+    impl_from_primitive!(Int32Impl, [i32, i64, i128,]);
     impl_from_basewise!(Int32Impl, [Int8Impl, Int16Impl,]);
     impl_from_bitwise!(Int32Impl, 18, Int32Impl, [17,]);
     impl_from_bitwise!(Int32Impl, 19, Int32Impl, [17, 18,]);
@@ -1293,6 +1321,7 @@ mod implementation {
     impl_from_bitwise!(Int32Impl, 32, Int32Impl, [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,]);
 
     // Int64Impl::from()
+    impl_from_primitive!(Int64Impl, [i64, i128,]);
     impl_from_basewise!(Int64Impl, [Int8Impl, Int16Impl, Int32Impl,]);
     impl_from_bitwise!(Int64Impl, 34, Int64Impl, [33,]);
     impl_from_bitwise!(Int64Impl, 35, Int64Impl, [33, 34,]);
@@ -1409,6 +1438,7 @@ mod implementation {
     );
 
     // Int128Impl::from()
+    impl_from_primitive!(Int128Impl, [i128,]);
     impl_from_basewise!(Int128Impl, [Int8Impl, Int16Impl, Int32Impl, Int64Impl,]);
     impl_from_bitwise!(Int128Impl, 66, Int128Impl, [65,]);
     impl_from_bitwise!(Int128Impl, 67, Int128Impl, [65, 66,]);
@@ -1831,6 +1861,7 @@ mod implementation {
     );
 
     // UInt8Impl::try_from()
+    impl_try_from_primitive!(UInt8Impl, [i8, i16, i32, i64, i128,]);
     impl_try_from_basewise!(
         UInt8Impl,
         u8,
@@ -1846,6 +1877,7 @@ mod implementation {
     impl_try_from_bitwise!(UInt8Impl, u8, 7, [8,]);
 
     // UInt16Impl::try_from()
+    impl_try_from_primitive!(UInt16Impl, [u8, i8, i16, i32, i64, i128,]);
     impl_try_from_basewise!(
         UInt16Impl,
         u16,
@@ -1860,6 +1892,7 @@ mod implementation {
     impl_try_from_bitwise!(UInt16Impl, u16, 15, [16,]);
 
     // UInt32Impl::try_from()
+    impl_try_from_primitive!(UInt32Impl, [u8, u16, i8, i16, i32, i64, i128, usize,]);
     impl_try_from_basewise!(
         UInt32Impl,
         u32,
@@ -1882,6 +1915,7 @@ mod implementation {
     impl_try_from_bitwise!(UInt32Impl, u32, 31, [32,]);
 
     // UInt64Impl::try_from()
+    impl_try_from_primitive!(UInt64Impl, [u8, u16, u32, i8, i16, i32, i64, i128, usize,]);
     impl_try_from_basewise!(UInt64Impl, u64, [UInt128Impl, Int8Impl, Int16Impl, Int32Impl, Int64Impl, Int128Impl,]);
     impl_try_from_bitwise!(
         UInt64Impl,
@@ -1998,6 +2032,7 @@ mod implementation {
     impl_try_from_bitwise!(UInt64Impl, u64, 63, [64,]);
 
     // UInt128Impl::try_from()
+    impl_try_from_primitive!(UInt128Impl, [u8, u16, u32, u64, i8, i16, i32, i64, i128, usize,]);
     impl_try_from_basewise!(UInt128Impl, u128, [Int8Impl, Int16Impl, Int32Impl, Int64Impl, Int128Impl,]);
     impl_try_from_bitwise!(
         UInt128Impl,
@@ -2454,6 +2489,7 @@ mod implementation {
     impl_try_from_bitwise!(UInt128Impl, u128, 127, [128,]);
 
     // Int8Impl::try_from()
+    impl_try_from_primitive!(Int8Impl, [u8, u16, u32, u64, u128, usize,]);
     impl_try_from_basewise!(
         Int8Impl,
         i8,
@@ -2469,6 +2505,7 @@ mod implementation {
     impl_try_from_bitwise!(Int8Impl, i8, 7, [8,]);
 
     // Int16Impl::try_from()
+    impl_try_from_primitive!(Int16Impl, [u8, u16, u32, u64, u128, i8, usize,]);
     impl_try_from_basewise!(
         Int16Impl,
         i16,
@@ -2483,6 +2520,7 @@ mod implementation {
     impl_try_from_bitwise!(Int16Impl, i16, 15, [16,]);
 
     // Int32Impl::try_from()
+    impl_try_from_primitive!(Int32Impl, [u8, u16, u32, u64, u128, i8, i16, usize,]);
     impl_try_from_basewise!(
         Int32Impl,
         i32,
@@ -2505,6 +2543,7 @@ mod implementation {
     impl_try_from_bitwise!(Int32Impl, i32, 31, [32,]);
 
     // Int64Impl::try_from()
+    impl_try_from_primitive!(Int64Impl, [u8, u16, u32, u64, u128, i8, i16, i32, usize,]);
     impl_try_from_basewise!(Int64Impl, i64, [UInt8Impl, UInt16Impl, UInt32Impl, UInt64Impl, UInt128Impl, Int128Impl,]);
     impl_try_from_bitwise!(
         Int64Impl,
@@ -2621,6 +2660,7 @@ mod implementation {
     impl_try_from_bitwise!(Int64Impl, i64, 63, [64,]);
 
     // Int128Impl::try_from()
+    impl_try_from_primitive!(Int128Impl, [u8, u16, u32, u64, u128, i8, i16, i32, i64, usize,]);
     impl_try_from_basewise!(Int128Impl, i128, [UInt8Impl, UInt16Impl, UInt32Impl, UInt64Impl, UInt128Impl,]);
     impl_try_from_bitwise!(
         Int128Impl,
@@ -3376,6 +3416,16 @@ mod tests {
     }
 
     #[test]
+    fn test_from_primitive() {
+        assert_eq!(u8::from(uint::<3>::new(1)), 1u8);
+        assert_eq!(u128::from(uint::<3>::new(1)), 1u128);
+        assert_eq!(i8::from(int::<3>::new(-1)), -1i8);
+        assert_eq!(i128::from(int::<3>::new(-1)), -1i128);
+
+        assert_eq!(usize::from(uint::<12>::new(1)), 1usize);
+    }
+
+    #[test]
     fn test_try_from() {
         assert_eq!(uint::<4>::try_from(uint::<8>::new(1)).unwrap(), uint::<4>::new(1));
         assert_eq!(uint::<4>::try_from(uint::<16>::new(1)).unwrap(), uint::<4>::new(1));
@@ -3402,5 +3452,26 @@ mod tests {
 
         assert_eq!(uint::<4>::try_from(int::<128>::new(0x1F)), Err(TryFromGenericIntError));
         assert_eq!(int::<4>::try_from(int::<128>::new(0xF)), Err(TryFromGenericIntError));
+    }
+
+    #[test]
+    fn test_try_from_primitive() {
+        assert_eq!(u8::try_from(uint::<16>::new(1)), Ok(1u8));
+        assert_eq!(u8::try_from(uint::<32>::new(1)), Ok(1u8));
+        assert_eq!(u8::try_from(uint::<63>::new(1)), Ok(1u8));
+        assert_eq!(u8::try_from(uint::<64>::new(1)), Ok(1u8));
+        assert_eq!(u8::try_from(uint::<128>::new(1)), Ok(1u8));
+
+        assert_eq!(i8::try_from(int::<16>::new(-1)), Ok(-1i8));
+        assert_eq!(i8::try_from(int::<32>::new(-1)), Ok(-1i8));
+        assert_eq!(i8::try_from(int::<63>::new(-1)), Ok(-1i8));
+        assert_eq!(i8::try_from(int::<64>::new(-1)), Ok(-1i8));
+        assert_eq!(i8::try_from(int::<128>::new(-1)), Ok(-1i8));
+
+        assert_eq!(usize::try_from(uint::<32>::new(1)), Ok(1usize));
+        assert_eq!(usize::try_from(int::<32>::new(1)), Ok(1usize));
+
+        assert_eq!(u8::try_from(uint::<9>::new(0x1FF)), Err(TryFromGenericIntError));
+        assert_eq!(usize::try_from(int::<6>::new(-1)), Err(TryFromGenericIntError));
     }
 }
